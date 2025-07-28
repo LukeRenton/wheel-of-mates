@@ -1,0 +1,112 @@
+import { useState, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
+
+interface WheelPickerProps {
+  names: string[];
+  onSelect: (name: string) => void;
+  disabled?: boolean;
+}
+
+export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerProps) => {
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const wheelRef = useRef<HTMLDivElement>(null);
+
+  const segmentAngle = 360 / names.length;
+  const colors = [
+    'hsl(263 70% 50%)', // primary
+    'hsl(12 76% 61%)',  // accent
+    'hsl(142 76% 36%)', // success
+    'hsl(38 92% 50%)',  // warning
+    'hsl(215 100% 60%)', // blue
+    'hsl(300 76% 50%)'  // purple
+  ];
+
+  const spinWheel = () => {
+    if (isSpinning || disabled) return;
+
+    setIsSpinning(true);
+    
+    // Random spin between 3-6 full rotations plus random angle
+    const spins = Math.floor(Math.random() * 4) + 3;
+    const randomAngle = Math.random() * 360;
+    const totalRotation = rotation + (spins * 360) + randomAngle;
+    
+    setRotation(totalRotation);
+
+    setTimeout(() => {
+      // Calculate which segment the pointer landed on
+      const normalizedAngle = (360 - (totalRotation % 360)) % 360;
+      const selectedIndex = Math.floor(normalizedAngle / segmentAngle);
+      const selectedName = names[selectedIndex];
+      
+      setIsSpinning(false);
+      onSelect(selectedName);
+      
+      toast({
+        title: "Partner Selected!",
+        description: `You've been matched with ${selectedName}`,
+      });
+    }, 3000);
+  };
+
+  return (
+    <div className="flex flex-col items-center space-y-8">
+      <div className="relative">
+        {/* Pointer */}
+        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 z-10">
+          <div className="w-0 h-0 border-l-4 border-r-4 border-b-8 border-l-transparent border-r-transparent border-b-primary" />
+        </div>
+        
+        {/* Wheel */}
+        <div 
+          ref={wheelRef}
+          className={`relative w-80 h-80 rounded-full border-4 border-primary shadow-elevated ${
+            isSpinning ? 'transition-transform duration-[3000ms] ease-out' : ''
+          }`}
+          style={{ transform: `rotate(${rotation}deg)` }}
+        >
+          {names.map((name, index) => {
+            const angle = index * segmentAngle;
+            const color = colors[index % colors.length];
+            
+            return (
+              <div
+                key={name}
+                className="absolute w-full h-full"
+                style={{
+                  transform: `rotate(${angle}deg)`,
+                  clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.sin((segmentAngle * Math.PI) / 180)}% ${50 - 50 * Math.cos((segmentAngle * Math.PI) / 180)}%)`
+                }}
+              >
+                <div 
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ backgroundColor: color }}
+                >
+                  <span 
+                    className="text-white font-semibold text-sm transform"
+                    style={{
+                      transform: `rotate(${segmentAngle / 2}deg) translateY(-120px)`,
+                      transformOrigin: '50% 50%'
+                    }}
+                  >
+                    {name}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <Button 
+        onClick={spinWheel} 
+        disabled={isSpinning || disabled}
+        className="bg-gradient-primary hover:shadow-glow transition-all duration-300 text-lg px-8 py-6"
+      >
+        {isSpinning ? 'Spinning...' : 'Spin the Wheel!'}
+      </Button>
+    </div>
+  );
+};
