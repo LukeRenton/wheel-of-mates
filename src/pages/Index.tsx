@@ -9,6 +9,7 @@ import { toast } from '@/hooks/use-toast';
 interface Partnership {
   week: number;
   partner: string;
+  hasSpun?: boolean; // Track if user has spun for this partnership
 }
 
 interface UserData {
@@ -52,9 +53,16 @@ const Index = () => {
   useEffect(() => {
     if (currentUser && allPartnerships[currentUser]) {
       setUserData(allPartnerships[currentUser]);
-      const latestPartnership = allPartnerships[currentUser].partnerships[allPartnerships[currentUser].partnerships.length - 1];
-      if (latestPartnership) {
-        setCurrentPartner(latestPartnership.partner);
+      
+      // Check if user has a current partnership that they haven't spun for
+      const currentWeekPartnership = allPartnerships[currentUser].partnerships.find(
+        p => p.week === allPartnerships[currentUser].currentWeek - 1 && p.hasSpun
+      );
+      
+      if (currentWeekPartnership) {
+        setCurrentPartner(currentWeekPartnership.partner);
+      } else {
+        setCurrentPartner('');
       }
     }
   }, [currentUser, allPartnerships]);
@@ -81,6 +89,17 @@ const Index = () => {
   const getAvailablePartners = () => {
     if (!userData) return [];
     
+    // Check if user has a predetermined partner for current week that they haven't spun for
+    const currentWeekPartnership = userData.partnerships.find(
+      p => p.week === userData.currentWeek - 1 && !p.hasSpun
+    );
+    
+    if (currentWeekPartnership) {
+      // They have a predetermined partner, show only that partner
+      return [currentWeekPartnership.partner];
+    }
+    
+    // Otherwise, show all available partners (excluding previous partners)
     const previousPartners = userData.partnerships.map(p => p.partner);
     return VALID_NAMES.filter(name => 
       name !== currentUser && !previousPartners.includes(name)
@@ -90,52 +109,91 @@ const Index = () => {
   const handlePartnerSelection = (selectedPartner: string) => {
     if (!userData) return;
 
-    const newWeek = userData.currentWeek;
+    const newWeek = userData.currentWeek - 1; // Current week for partnership
     
-    // Update current user's data with their selection
-    const updatedUserData: UserData = {
-      ...userData,
-      partnerships: [...userData.partnerships, { week: newWeek, partner: selectedPartner }],
-      currentWeek: newWeek + 1
-    };
-
-    // Check if the selected partner has already chosen the current user in the same week
-    const partnerData = allPartnerships[selectedPartner];
-    const partnerAlreadyChose = partnerData?.partnerships.some(
-      p => p.week === newWeek && p.partner === currentUser
+    // Check if this is a predetermined partnership that user is now spinning for
+    const existingPartnership = userData.partnerships.find(
+      p => p.week === newWeek && p.partner === selectedPartner && !p.hasSpun
     );
 
-    let updatedPartnerData: UserData;
-    
-    if (partnerAlreadyChose) {
-      // Partner already chose current user, so they're now mutual partners
-      updatedPartnerData = partnerData;
+    if (existingPartnership) {
+      // Mark this partnership as "spun" for current user
+      const updatedPartnerships = userData.partnerships.map(p =>
+        p.week === newWeek && p.partner === selectedPartner 
+          ? { ...p, hasSpun: true }
+          : p
+      );
+
+      const updatedUserData: UserData = {
+        ...userData,
+        partnerships: updatedPartnerships
+      };
+
+      setAllPartnerships(prev => ({
+        ...prev,
+        [currentUser]: updatedUserData
+      }));
+
+      setCurrentPartner(selectedPartner);
+      setUserData(updatedUserData);
+
       toast({
-        title: "Mutual Match! 🎉",
-        description: `You and ${selectedPartner} have both chosen each other!`,
+        title: "Partner Revealed! 🎉",
+        description: `You've been matched with ${selectedPartner}!`,
       });
     } else {
-      // Partner hasn't chosen yet, just update their available data
-      updatedPartnerData = partnerData || {
+      // This is a new partnership - create 2-way partnership
+      const updatedUserData: UserData = {
+        ...userData,
+        partnerships: [...userData.partnerships, { week: newWeek, partner: selectedPartner, hasSpun: true }],
+        currentWeek: userData.currentWeek + 1
+      };
+
+      // Create partnership for selected partner (but mark as not spun so they can spin later)
+      const partnerData = allPartnerships[selectedPartner] || {
         name: selectedPartner,
         partnerships: [],
         currentWeek: 1
       };
+
+      const updatedPartnerData: UserData = {
+        ...partnerData,
+        partnerships: [...partnerData.partnerships, { week: newWeek, partner: currentUser, hasSpun: false }],
+        currentWeek: Math.max(partnerData.currentWeek, newWeek + 1)
+      };
+
+      setAllPartnerships(prev => ({
+        ...prev,
+        [currentUser]: updatedUserData,
+        [selectedPartner]: updatedPartnerData
+      }));
+
+      setCurrentPartner(selectedPartner);
+      setUserData(updatedUserData);
+
+      toast({
+        title: "Partnership Created! 🎉",
+        description: `You've been matched with ${selectedPartner}!`,
+      });
     }
-
-    // Update state
-    setAllPartnerships(prev => ({
-      ...prev,
-      [currentUser]: updatedUserData,
-      [selectedPartner]: updatedPartnerData
-    }));
-
-    setCurrentPartner(selectedPartner);
-    setUserData(updatedUserData);
   };
 
   const startNewWeek = () => {
+    if (!userData) return;
+    
+    const updatedUserData: UserData = {
+      ...userData,
+      currentWeek: userData.currentWeek + 1
+    };
+    
+    setAllPartnerships(prev => ({
+      ...prev,
+      [currentUser]: updatedUserData
+    }));
+    
+    setUserData(updatedUserData);
     setCurrentPartner('');
+    
     toast({
       title: "New Week Started!",
       description: "Time to find a new partner for this week.",
