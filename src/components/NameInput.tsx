@@ -84,12 +84,13 @@ export const NameInput = ({ validNames, onNameSubmit }: NameInputProps) => {
             </p>
             <div className="grid grid-cols-2 gap-2 text-sm">
               {validNames.map((name) => (
-                <div 
-                  key={name} 
-                  className="text-center py-1 px-2 bg-secondary rounded-md text-secondary-foreground"
+                <button
+                  key={name}
+                  onClick={() => setInputValue(name)}
+                  className="text-center py-2 px-2 bg-secondary hover:bg-secondary/80 rounded-md text-secondary-foreground transition-colors duration-200 hover:scale-105 transform"
                 >
                   {name}
-                </div>
+                </button>
               ))}
             </div>
           </div>

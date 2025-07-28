@@ -92,25 +92,36 @@ const Index = () => {
 
     const newWeek = userData.currentWeek;
     
-    // Update current user's data
+    // Update current user's data with their selection
     const updatedUserData: UserData = {
       ...userData,
       partnerships: [...userData.partnerships, { week: newWeek, partner: selectedPartner }],
       currentWeek: newWeek + 1
     };
 
-    // Update selected partner's data
-    const partnerData = allPartnerships[selectedPartner] || {
-      name: selectedPartner,
-      partnerships: [],
-      currentWeek: 1
-    };
+    // Check if the selected partner has already chosen the current user in the same week
+    const partnerData = allPartnerships[selectedPartner];
+    const partnerAlreadyChose = partnerData?.partnerships.some(
+      p => p.week === newWeek && p.partner === currentUser
+    );
 
-    const updatedPartnerData: UserData = {
-      ...partnerData,
-      partnerships: [...partnerData.partnerships, { week: newWeek, partner: currentUser }],
-      currentWeek: Math.max(partnerData.currentWeek, newWeek + 1)
-    };
+    let updatedPartnerData: UserData;
+    
+    if (partnerAlreadyChose) {
+      // Partner already chose current user, so they're now mutual partners
+      updatedPartnerData = partnerData;
+      toast({
+        title: "Mutual Match! 🎉",
+        description: `You and ${selectedPartner} have both chosen each other!`,
+      });
+    } else {
+      // Partner hasn't chosen yet, just update their available data
+      updatedPartnerData = partnerData || {
+        name: selectedPartner,
+        partnerships: [],
+        currentWeek: 1
+      };
+    }
 
     // Update state
     setAllPartnerships(prev => ({

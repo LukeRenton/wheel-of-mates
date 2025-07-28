@@ -28,10 +28,16 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
 
     setIsSpinning(true);
     
-    // Random spin between 3-6 full rotations plus random angle
-    const spins = Math.floor(Math.random() * 4) + 3;
+    // Random spin between 4-8 full rotations plus random angle
+    const spins = Math.floor(Math.random() * 5) + 4;
     const randomAngle = Math.random() * 360;
     const totalRotation = rotation + (spins * 360) + randomAngle;
+    
+    // Apply rotation immediately with CSS transition
+    if (wheelRef.current) {
+      wheelRef.current.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      wheelRef.current.style.transform = `rotate(${totalRotation}deg)`;
+    }
     
     setRotation(totalRotation);
 
@@ -42,13 +48,19 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
       const selectedName = names[selectedIndex];
       
       setIsSpinning(false);
+      
+      // Reset transition for next spin
+      if (wheelRef.current) {
+        wheelRef.current.style.transition = 'none';
+      }
+      
       onSelect(selectedName);
       
       toast({
         title: "Partner Selected!",
         description: `You've been matched with ${selectedName}`,
       });
-    }, 3000);
+    }, 4000);
   };
 
   return (
@@ -62,9 +74,7 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
         {/* Wheel */}
         <div 
           ref={wheelRef}
-          className={`relative w-80 h-80 rounded-full border-4 border-primary shadow-elevated ${
-            isSpinning ? 'transition-transform duration-[3000ms] ease-out' : ''
-          }`}
+          className="relative w-80 h-80 rounded-full border-4 border-primary shadow-elevated"
           style={{ transform: `rotate(${rotation}deg)` }}
         >
           {names.map((name, index) => {
