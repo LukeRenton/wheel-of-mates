@@ -20,195 +20,103 @@ interface UserData {
 
 const VALID_NAMES = [
   'Sam', 'Luke', 'Zee-Jay', 'Courtney', 'Banele', 'Dumi', 'Ethan', 
-  'Jazlyn', 'Justine', 'Lesedi', 'Madi', 'Martin', 'Ndilisa', 'Tino', 'Wilmar'
+  'Jazlyn', 'Justine', 'Lesedi', 'Madi', 'Martin', 'Ndilisa', 'Tino', 'Wilmar', 'Thembi'
+];
+
+const PRECOMPUTED_PAIRS = [
+  {'week': 1, 'pairs': [['Ndilisa', 'Thembi'], ['Zee-Jay', 'Martin'], ['Ethan', 'Dumi'], ['Sam', 'Banele'], ['Lesedi', 'Courtney'], ['Luke', 'Wilmar'], ['Madi', 'Justine'], ['Jazlyn', 'Tino']]},
+  {'week': 2, 'pairs': [['Jazlyn', 'Zee-Jay'], ['Madi', 'Thembi'], ['Justine', 'Martin'], ['Courtney', 'Banele'], ['Ndilisa', 'Tino'], ['Ethan', 'Sam'], ['Dumi', 'Wilmar'], ['Luke', 'Lesedi']]},
+  {'week': 3, 'pairs': [['Luke', 'Sam'], ['Dumi', 'Ndilisa'], ['Jazlyn', 'Thembi'], ['Zee-Jay', 'Ethan'], ['Wilmar', 'Banele'], ['Lesedi', 'Justine'], ['Courtney', 'Tino'], ['Madi', 'Martin']]},
+  {'week': 4, 'pairs': [['Zee-Jay', 'Sam'], ['Ndilisa', 'Courtney'], ['Tino', 'Luke'], ['Jazlyn', 'Ethan'], ['Lesedi', 'Dumi'], ['Justine', 'Wilmar'], ['Thembi', 'Martin'], ['Madi', 'Banele']]},
+  {'week': 5, 'pairs': [['Ethan', 'Wilmar'], ['Zee-Jay', 'Banele'], ['Jazlyn', 'Madi'], ['Luke', 'Thembi'], ['Courtney', 'Martin'], ['Justine', 'Sam'], ['Ndilisa', 'Lesedi'], ['Tino', 'Dumi']]},
+  {'week': 6, 'pairs': [['Zee-Jay', 'Tino'], ['Jazlyn', 'Luke'], ['Martin', 'Wilmar'], ['Madi', 'Ethan'], ['Banele', 'Ndilisa'], ['Justine', 'Dumi'], ['Sam', 'Lesedi'], ['Thembi', 'Courtney']]},
+  {'week': 7, 'pairs': [['Courtney', 'Dumi'], ['Tino', 'Thembi'], ['Sam', 'Wilmar'], ['Ndilisa', 'Martin'], ['Ethan', 'Lesedi'], ['Zee-Jay', 'Madi'], ['Luke', 'Justine'], ['Jazlyn', 'Banele']]},
+  {'week': 8, 'pairs': [['Wilmar', 'Jazlyn'], ['Justine', 'Ndilisa'], ['Dumi', 'Sam'], ['Zee-Jay', 'Lesedi'], ['Banele', 'Martin'], ['Tino', 'Madi'], ['Courtney', 'Luke'], ['Ethan', 'Thembi']]},
+  {'week': 9, 'pairs': [['Dumi', 'Banele'], ['Ethan', 'Tino'], ['Zee-Jay', 'Wilmar'], ['Madi', 'Lesedi'], ['Jazlyn', 'Ndilisa'], ['Sam', 'Courtney'], ['Thembi', 'Justine'], ['Luke', 'Martin']]},
+  {'week': 10, 'pairs': [['Luke', 'Ndilisa'], ['Courtney', 'Justine'], ['Madi', 'Dumi'], ['Zee-Jay', 'Thembi'], ['Sam', 'Tino'], ['Banele', 'Ethan'], ['Wilmar', 'Lesedi'], ['Martin', 'Jazlyn']]},
+  {'week': 11, 'pairs': [['Zee-Jay', 'Justine'], ['Thembi', 'Lesedi'], ['Banele', 'Luke'], ['Jazlyn', 'Sam'], ['Dumi', 'Martin'], ['Ndilisa', 'Ethan'], ['Tino', 'Wilmar'], ['Madi', 'Courtney']]},
+  {'week': 12, 'pairs': [['Wilmar', 'Courtney'], ['Banele', 'Lesedi'], ['Luke', 'Zee-Jay'], ['Ndilisa', 'Madi'], ['Sam', 'Thembi'], ['Justine', 'Tino'], ['Jazlyn', 'Dumi'], ['Martin', 'Ethan']]},
+  {'week': 13, 'pairs': [['Wilmar', 'Ndilisa'], ['Ethan', 'Courtney'], ['Banele', 'Thembi'], ['Sam', 'Martin'], ['Madi', 'Luke'], ['Lesedi', 'Tino'], ['Zee-Jay', 'Dumi'], ['Jazlyn', 'Justine']]},
+  {'week': 14, 'pairs': [['Ethan', 'Justine'], ['Thembi', 'Wilmar'], ['Jazlyn', 'Courtney'], ['Banele', 'Tino'], ['Ndilisa', 'Zee-Jay'], ['Lesedi', 'Martin'], ['Madi', 'Sam'], ['Dumi', 'Luke']]},
+  {'week': 15, 'pairs': [['Courtney', 'Zee-Jay'], ['Ethan', 'Luke'], ['Thembi', 'Dumi'], ['Martin', 'Tino'], ['Justine', 'Banele'], ['Wilmar', 'Madi'], ['Ndilisa', 'Sam'], ['Jazlyn', 'Lesedi']]}
 ];
 
 const Index = () => {
   const [currentUser, setCurrentUser] = useState<string>('');
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [currentPartner, setCurrentPartner] = useState<string>('');
-  const [allPartnerships, setAllPartnerships] = useState<Record<string, UserData>>({});
+  const [selectedWeek, setSelectedWeek] = useState<number>(1);
+  const [userSpinHistory, setUserSpinHistory] = useState<Record<string, number[]>>({});
 
   // Load data from localStorage on component mount
   useEffect(() => {
-    const saved = localStorage.getItem('partnerPickerData');
+    const saved = localStorage.getItem('partnerPickerSpinHistory');
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        setAllPartnerships(data);
+        setUserSpinHistory(data);
       } catch (error) {
         console.error('Error loading saved data:', error);
       }
     }
   }, []);
 
-  // Save data to localStorage whenever allPartnerships changes
+  // Save data to localStorage whenever userSpinHistory changes
   useEffect(() => {
-    if (Object.keys(allPartnerships).length > 0) {
-      localStorage.setItem('partnerPickerData', JSON.stringify(allPartnerships));
+    if (Object.keys(userSpinHistory).length > 0) {
+      localStorage.setItem('partnerPickerSpinHistory', JSON.stringify(userSpinHistory));
     }
-  }, [allPartnerships]);
-
-  // Update userData when currentUser or allPartnerships changes
-  useEffect(() => {
-    if (currentUser && allPartnerships[currentUser]) {
-      setUserData(allPartnerships[currentUser]);
-      
-      // Check if user has a current partnership that they haven't spun for
-      const currentWeekPartnership = allPartnerships[currentUser].partnerships.find(
-        p => p.week === allPartnerships[currentUser].currentWeek - 1 && p.hasSpun
-      );
-      
-      if (currentWeekPartnership) {
-        setCurrentPartner(currentWeekPartnership.partner);
-      } else {
-        setCurrentPartner('');
-      }
-    }
-  }, [currentUser, allPartnerships]);
+  }, [userSpinHistory]);
 
   const handleNameSubmit = (name: string) => {
     setCurrentUser(name);
-    
-    // Initialize user data if it doesn't exist
-    if (!allPartnerships[name]) {
-      const newUserData: UserData = {
-        name,
-        partnerships: [],
-        currentWeek: 1
-      };
-      
-      setAllPartnerships(prev => ({
-        ...prev,
-        [name]: newUserData
-      }));
-      setUserData(newUserData);
-    }
   };
 
-  const getAvailablePartners = () => {
-    if (!userData) return [];
+  const getPartnerForWeek = (week: number) => {
+    const weekData = PRECOMPUTED_PAIRS.find(w => w.week === week);
+    if (!weekData) return null;
     
-    // Check if user has a predetermined partner for current week that they haven't spun for
-    const currentWeekPartnership = userData.partnerships.find(
-      p => p.week === userData.currentWeek - 1 && !p.hasSpun
-    );
-    
-    if (currentWeekPartnership) {
-      // They have a predetermined partner, show only that partner
-      return [currentWeekPartnership.partner];
+    for (const pair of weekData.pairs) {
+      if (pair[0] === currentUser) return pair[1];
+      if (pair[1] === currentUser) return pair[0];
     }
-    
-    // Otherwise, show all available partners (excluding previous partners)
-    const previousPartners = userData.partnerships.map(p => p.partner);
-    return VALID_NAMES.filter(name => 
-      name !== currentUser && !previousPartners.includes(name)
-    );
+    return null;
+  };
+
+  const hasUserSpunForWeek = (week: number) => {
+    return userSpinHistory[currentUser]?.includes(week) || false;
   };
 
   const handlePartnerSelection = (selectedPartner: string) => {
-    if (!userData) return;
+    // Mark this week as spun for current user
+    setUserSpinHistory(prev => ({
+      ...prev,
+      [currentUser]: [...(prev[currentUser] || []), selectedWeek]
+    }));
 
-    const newWeek = userData.currentWeek - 1; // Current week for partnership
-    
-    // Check if this is a predetermined partnership that user is now spinning for
-    const existingPartnership = userData.partnerships.find(
-      p => p.week === newWeek && p.partner === selectedPartner && !p.hasSpun
-    );
-
-    if (existingPartnership) {
-      // Mark this partnership as "spun" for current user
-      const updatedPartnerships = userData.partnerships.map(p =>
-        p.week === newWeek && p.partner === selectedPartner 
-          ? { ...p, hasSpun: true }
-          : p
-      );
-
-      const updatedUserData: UserData = {
-        ...userData,
-        partnerships: updatedPartnerships
-      };
-
-      setAllPartnerships(prev => ({
-        ...prev,
-        [currentUser]: updatedUserData
-      }));
-
-      setCurrentPartner(selectedPartner);
-      setUserData(updatedUserData);
-
-      toast({
-        title: "Partner Revealed! 🎉",
-        description: `You've been matched with ${selectedPartner}!`,
-      });
-    } else {
-      // This is a new partnership - create 2-way partnership
-      const updatedUserData: UserData = {
-        ...userData,
-        partnerships: [...userData.partnerships, { week: newWeek, partner: selectedPartner, hasSpun: true }],
-        currentWeek: userData.currentWeek + 1
-      };
-
-      // Create partnership for selected partner (but mark as not spun so they can spin later)
-      const partnerData = allPartnerships[selectedPartner] || {
-        name: selectedPartner,
-        partnerships: [],
-        currentWeek: 1
-      };
-
-      const updatedPartnerData: UserData = {
-        ...partnerData,
-        partnerships: [...partnerData.partnerships, { week: newWeek, partner: currentUser, hasSpun: false }],
-        currentWeek: Math.max(partnerData.currentWeek, newWeek + 1)
-      };
-
-      setAllPartnerships(prev => ({
-        ...prev,
-        [currentUser]: updatedUserData,
-        [selectedPartner]: updatedPartnerData
-      }));
-
-      setCurrentPartner(selectedPartner);
-      setUserData(updatedUserData);
-
-      toast({
-        title: "Partnership Created! 🎉",
-        description: `You've been matched with ${selectedPartner}!`,
-      });
-    }
+    toast({
+      title: "Partner Revealed! 🎉",
+      description: `You've been matched with ${selectedPartner} for Week ${selectedWeek}!`,
+    });
   };
 
-  const startNewWeek = () => {
-    if (!userData) return;
-    
-    const updatedUserData: UserData = {
-      ...userData,
-      currentWeek: userData.currentWeek + 1
-    };
-    
-    setAllPartnerships(prev => ({
-      ...prev,
-      [currentUser]: updatedUserData
-    }));
-    
-    setUserData(updatedUserData);
-    setCurrentPartner('');
-    
-    toast({
-      title: "New Week Started!",
-      description: "Time to find a new partner for this week.",
-    });
+  const getAvailablePartners = () => {
+    const partner = getPartnerForWeek(selectedWeek);
+    return partner ? [partner] : [];
   };
 
   const resetUser = () => {
     setCurrentUser('');
-    setUserData(null);
-    setCurrentPartner('');
+    setSelectedWeek(1);
+  };
+
+  const getUserSpinHistory = () => {
+    return userSpinHistory[currentUser] || [];
   };
 
   if (!currentUser) {
     return <NameInput validNames={VALID_NAMES} onNameSubmit={handleNameSubmit} />;
   }
+
+  const currentPartner = hasUserSpunForWeek(selectedWeek) ? getPartnerForWeek(selectedWeek) : null;
 
   return (
     <div className="min-h-screen bg-background py-8">
@@ -231,12 +139,35 @@ const Index = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Left Column - Current Status */}
+          {/* Left Column - Week Selection and Wheel */}
           <div className="space-y-6">
+            {/* Week Selection */}
+            <Card className="shadow-elevated border-border/50">
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">Select Week</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-3 gap-2 mb-4">
+                  {Array.from({ length: 15 }, (_, i) => i + 1).map(week => (
+                    <Button
+                      key={week}
+                      variant={selectedWeek === week ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setSelectedWeek(week)}
+                      className={`${hasUserSpunForWeek(week) ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                    >
+                      Week {week} {hasUserSpunForWeek(week) && '✓'}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Partner Section */}
             {currentPartner ? (
               <Card className="shadow-elevated border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-center">Current Partner</CardTitle>
+                  <CardTitle className="text-2xl text-center">Week {selectedWeek} Partner</CardTitle>
                 </CardHeader>
                 <CardContent className="text-center space-y-6">
                   <div className="p-6 bg-gradient-success rounded-lg">
@@ -244,29 +175,15 @@ const Index = () => {
                       {currentPartner}
                     </h2>
                     <p className="text-success-foreground/80 mt-2">
-                      Week {userData?.currentWeek ? userData.currentWeek - 1 : 1} Partner
+                      Already revealed!
                     </p>
                   </div>
-                  
-                  <Button 
-                    onClick={startNewWeek}
-                    className="w-full bg-gradient-accent hover:shadow-glow transition-all duration-300 text-lg py-6"
-                    disabled={getAvailablePartners().length === 0}
-                  >
-                    {getAvailablePartners().length === 0 ? 'No More Partners Available' : 'Start New Week'}
-                  </Button>
-                  
-                  {getAvailablePartners().length === 0 && (
-                    <p className="text-sm text-muted-foreground">
-                      You've been partnered with everyone! 🎉
-                    </p>
-                  )}
                 </CardContent>
               </Card>
             ) : (
               <Card className="shadow-elevated border-border/50">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-center">Find Your Partner</CardTitle>
+                  <CardTitle className="text-2xl text-center">Find Your Week {selectedWeek} Partner</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {getAvailablePartners().length > 0 ? (
@@ -276,9 +193,9 @@ const Index = () => {
                     />
                   ) : (
                     <div className="text-center py-8">
-                      <h3 className="text-xl font-semibold mb-2">All Done! 🎉</h3>
+                      <h3 className="text-xl font-semibold mb-2">No partner available</h3>
                       <p className="text-muted-foreground">
-                        You've been partnered with everyone available.
+                        Select a different week to find your partner.
                       </p>
                     </div>
                   )}
@@ -289,10 +206,29 @@ const Index = () => {
 
           {/* Right Column - History */}
           <div>
-            <PartnershipHistory 
-              currentUser={currentUser}
-              partnerships={userData?.partnerships || []}
-            />
+            <Card className="shadow-elevated border-border/50">
+              <CardHeader>
+                <CardTitle className="text-2xl text-center">Your Spin History</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {getUserSpinHistory().map(week => {
+                    const partner = getPartnerForWeek(week);
+                    return (
+                      <div key={week} className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <span className="font-medium">Week {week}</span>
+                        <span className="text-primary font-semibold">{partner}</span>
+                      </div>
+                    );
+                  })}
+                  {getUserSpinHistory().length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">
+                      No spins yet! Select a week and spin the wheel.
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
