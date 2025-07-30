@@ -4,7 +4,12 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  base: '/wheel-of-mates/', 
+export default defineConfig(({ mode }) => ({
+  base: '/wheel-of-mates/',
   plugins: [react()],
-})
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+}));
