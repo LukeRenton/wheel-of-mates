@@ -81,25 +81,39 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
           {names.map((name, index) => {
             const angle = index * segmentAngle;
             const color = colors[index % colors.length];
+            const nextAngle = (index + 1) * segmentAngle;
+            
+            // Calculate the segment points for a proper pie slice
+            const x1 = 50 + 50 * Math.cos((angle - 90) * Math.PI / 180);
+            const y1 = 50 + 50 * Math.sin((angle - 90) * Math.PI / 180);
+            const x2 = 50 + 50 * Math.cos((nextAngle - 90) * Math.PI / 180);
+            const y2 = 50 + 50 * Math.sin((nextAngle - 90) * Math.PI / 180);
+            
+            const largeArcFlag = segmentAngle > 180 ? 1 : 0;
             
             return (
               <div
                 key={name}
-                className="absolute w-full h-full"
+                className="absolute inset-0"
                 style={{
-                  transform: `rotate(${angle}deg)`,
-                  clipPath: `polygon(50% 50%, 50% 0%, ${50 + 50 * Math.sin((segmentAngle * Math.PI) / 180)}% ${50 - 50 * Math.cos((segmentAngle * Math.PI) / 180)}%)`
+                  clipPath: `polygon(50% 50%, ${x1}% ${y1}%, ${x2}% ${y2}%)`
                 }}
               >
                 <div 
-                  className="w-full h-full flex items-center justify-center"
+                  className="w-full h-full"
                   style={{ backgroundColor: color }}
+                />
+                <div
+                  className="absolute inset-0 flex items-center justify-center"
+                  style={{
+                    transform: `rotate(${angle + segmentAngle / 2}deg)`
+                  }}
                 >
                   <span 
-                    className="text-white font-semibold text-sm transform"
+                    className="text-white font-bold text-xs"
                     style={{
-                      transform: `rotate(${segmentAngle / 2}deg) translateY(-120px)`,
-                      transformOrigin: '50% 50%'
+                      transform: `translateY(-100px) rotate(${segmentAngle > 180 ? 180 : 0}deg)`,
+                      transformOrigin: 'center'
                     }}
                   >
                     {name}
