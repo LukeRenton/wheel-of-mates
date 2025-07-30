@@ -33,13 +33,11 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
     const randomAngle = Math.random() * 360;
     const totalRotation = rotation + (spins * 360) + randomAngle;
     
-    // Apply rotation immediately with CSS transition
+    // Apply rotation with CSS transition
     if (wheelRef.current) {
       wheelRef.current.style.transition = 'transform 4s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       wheelRef.current.style.transform = `rotate(${totalRotation}deg)`;
     }
-    
-    setRotation(totalRotation);
 
     setTimeout(() => {
       // Calculate which segment the pointer landed on
@@ -48,6 +46,7 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
       const selectedName = names[selectedIndex];
       
       setIsSpinning(false);
+      setRotation(totalRotation);
       
       // Reset transition for next spin
       if (wheelRef.current) {
