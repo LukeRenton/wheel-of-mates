@@ -15,12 +15,14 @@ export const WheelPicker = ({ names, onSelect, disabled = false }: WheelPickerPr
 
   const segmentAngle = 360 / names.length;
   const colors = [
-    'hsl(263 70% 50%)', // primary
-    'hsl(12 76% 61%)',  // accent
-    'hsl(142 76% 36%)', // success
-    'hsl(38 92% 50%)',  // warning
-    'hsl(215 100% 60%)', // blue
-    'hsl(300 76% 50%)'  // purple
+    '#8B5CF6', // purple
+    '#F97316', // orange
+    '#10B981', // green
+    '#F59E0B', // yellow
+    '#3B82F6', // blue
+    '#EC4899', // pink
+    '#EF4444', // red
+    '#6366F1'  // indigo
   ];
 
   const spinWheel = () => {
